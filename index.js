@@ -1,15 +1,18 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
-import { HOST, PORT } from "./config/config.js";
-import { errorHandler } from "./util/errorHandler.js";
-import { router as routerPayment } from "./routes/payment.routes.js";
+import { HOST, PORT } from "./src/config/config.js";
+import { errorHandler } from "./src/util/errorHandler.js";
+import { router as routerPayment } from "./src/routes/payment.routes.js";
+import path from "node:path";
 
 const app = express();
 
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
+
+app.use(express.static(path.resolve("src", "public")));
 
 app.get("/", (req, res, next) => {
   res.json({ message: `Hola, estás en ${req.url}` });

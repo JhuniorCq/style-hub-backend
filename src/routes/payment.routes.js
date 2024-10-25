@@ -11,9 +11,9 @@ router.get("/", (req, res, next) => {
 router.post("/create-order", PaymentController.createOrder);
 
 // Ruta si se presiona "comprar"
-router.post("/capture-order", PaymentController.captureOrder);
+router.get("/capture-order", PaymentController.captureOrder);
 
 // Ruta si se presiona "cancelar"
-router.post("/cancel-order", PaymentController.cancelOrder);
+router.get("/cancel-order", PaymentController.cancelOrder);
 
 export { router };
