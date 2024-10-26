@@ -6,6 +6,7 @@ import {
   PAYPAL_KEY_SECRET,
 } from "../config/config.js";
 import { convertPENToUSDProductList } from "../util/convertPENtoUSD.js";
+import { findAmountTotal } from "../util/logic.js";
 
 // const productList = [
 //   {
@@ -31,9 +32,15 @@ import { convertPENToUSDProductList } from "../util/convertPENtoUSD.js";
 export class PaymentController {
   static async createOrder(req, res, next) {
     // PEN no acepta creo :,v , USD y MXN sí
-    const productList = req.body;
+    // const productList = req.body;
 
-    const productListPaypal = await convertPENToUSDProductList(productList);
+    const { productList, checkoutData } = req.body;
+
+    // EN VEZ DE OBTENER UNA LISTA DE PRODUCTOS CON CADA PRODUCTO EN DÓLARES, puedo hallar el TOTAL en SOLES y eso convertirlo a DÓLARES, ya que NO es necesario que "purchase_units" tenga como VALOR un ARRAY de OBJETOS, puede ser un ARRAY de un SOLO OBJETO (dentro de este estarán todos los productos)
+    const productListPaypal = await convertPENToUSDProductList(
+      productList,
+      checkoutData.deliveryOption
+    );
 
     console.log(productListPaypal);
 

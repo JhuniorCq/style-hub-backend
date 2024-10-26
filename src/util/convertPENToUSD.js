@@ -1,6 +1,7 @@
 import axios from "axios";
 import { EXCHANGERATE_API } from "../config/config.js";
-import { roundToDecimals } from "./roundToDecimal.js";
+import { findAmountTotal, roundToDecimals } from "./logic.js";
+import { DELIVERY_OPTIONS, SHIPPING_COST } from "./constants.js";
 
 const getExchangerate = async () => {
   try {
@@ -16,6 +17,23 @@ const convertPENToUSD = async (amount) => {
   try {
     const exchangerate = await getExchangerate();
     return amount * exchangerate;
+  } catch (err) {
+    console.error("", err.message);
+  }
+};
+
+// Esto usaré en payment.controller.js para así PASAR un VALOR EXACTO a purchase_units y ya NO un ARRAY de PRODUCTOS
+export const findTotalOrderAmountUSD = async (productList, deliveryOption) => {
+  let amountTotal = findAmountTotal(productList);
+
+  if (deliveryOption === DELIVERY_OPTIONS.SHIPPING) {
+    amountTotal += SHIPPING_COST;
+  }
+  console.log(amountTotal);
+  try {
+    const amountTotalUSD = await convertPENToUSD(amountTotal);
+    console.log(amountTotalUSD);
+    return amountTotalUSD;
   } catch (err) {
     console.error("", err.message);
   }
@@ -48,9 +66,6 @@ export const convertPENToUSDProductList = async (productList) => {
   }
 };
 
-const result = await convertPENToUSD(100);
-console.log(`${100} soles son ${result} dólares`);
-
 const productList = [
   {
     id: 1,
@@ -75,3 +90,10 @@ const productList = [
 // REDONDEAR LAS CONVERSIONES
 const productListPaypal = await convertPENToUSDProductList(productList);
 console.log(productListPaypal);
+
+const xd = await findTotalOrderAmountUSD(
+  productList,
+  DELIVERY_OPTIONS.SHIPPING
+);
+
+console.log(xd);
