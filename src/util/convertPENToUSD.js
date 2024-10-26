@@ -26,14 +26,18 @@ export const convertPENToUSDProductList = async (productList) => {
     let productListPaypal = [];
 
     for (const product of productList) {
-      let priceUSD = await convertPENToUSD(product.price);
-      priceUSD = roundToDecimals(priceUSD, 2);
+      const totalAmount = product.price * product.quantity;
+      let totalAmountUSD = await convertPENToUSD(totalAmount);
+      totalAmountUSD = roundToDecimals(totalAmountUSD, 2);
 
+      console.log(
+        `El monto en soles es ${totalAmount}, y en dólares es ${totalAmountUSD}`
+      );
       productListPaypal.push({
         reference_id: product.id,
         amount: {
           currency_code: "USD",
-          value: priceUSD,
+          value: totalAmountUSD,
         },
       });
     }
@@ -52,16 +56,19 @@ const productList = [
     id: 1,
     name: "Gorra",
     price: 10,
+    quantity: 1,
   },
   {
     id: 2,
     name: "Camisa",
     price: 35,
+    quantity: 1,
   },
   {
     id: 3,
     name: "Polo",
     price: 20,
+    quantity: 2,
   },
 ];
 

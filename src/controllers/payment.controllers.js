@@ -7,28 +7,31 @@ import {
 } from "../config/config.js";
 import { convertPENToUSDProductList } from "../util/convertPENtoUSD.js";
 
-const productList = [
-  {
-    id: 1,
-    name: "Gorra",
-    price: 10,
-  },
-  {
-    id: 2,
-    name: "Camisa",
-    price: 35,
-  },
-  {
-    id: 3,
-    name: "Polo",
-    price: 20,
-  },
-];
+// const productList = [
+//   {
+//     id: 1,
+//     name: "Gorra",
+//     price: 10,
+//     quantity: 1,
+//   },
+//   {
+//     id: 2,
+//     name: "Camisa",
+//     price: 35,
+//     quantity: 1,
+//   },
+//   {
+//     id: 3,
+//     name: "Polo",
+//     price: 20,
+//     quantity: 2,
+//   },
+// ];
 
 export class PaymentController {
   static async createOrder(req, res, next) {
     // PEN no acepta creo :,v , USD y MXN sí
-    // const productList = req.body;
+    const productList = req.body;
 
     const productListPaypal = await convertPENToUSDProductList(productList);
 
@@ -45,7 +48,8 @@ export class PaymentController {
               landing_page: "NO_PREFERENCE",
               user_action: "PAY_NOW",
               return_url: `${HOST}/payment/capture-order`,
-              cancel_url: `${HOST}/payment/cancel-order`,
+              // cancel_url: `${HOST}/payment/cancel-order`,
+              cancel_url: "http://localhost:5173/checkout",
             },
           },
         },
@@ -99,7 +103,15 @@ export class PaymentController {
         }
       );
 
-      res.send("Listo, el pedido ha sido pagado.");
+      // res.send("Listo, el pedido ha sido pagado.");
+      // res.redirect("http://localhost:5173");
+
+      // LA SOLUCIÓN PARA CONECTAR CON EL FRONTEND SERÍA -> Almacenar en la BD el ID del PEDIDO y también todos los datos necesarios (los datos tanto de los Productos como los del FORMS), y luego usar un "res.redirect(`http://localhost:5173/order-completion?orderId=${response.data.id}`)"
+      res.json({
+        success: true,
+        message: "Pago realizado con éxito",
+        orderData: response.data,
+      });
     } catch (err) {
       console.error("", err);
       next(err);
@@ -108,8 +120,8 @@ export class PaymentController {
 
   static async cancelOrder(req, res, next) {
     try {
-      // res.json({ cancelOrder: true });
-      res.redirect("/");
+      res.json({ success: false });
+      // res.redirect("/");
     } catch (err) {
       console.error("", err);
       next(err);
