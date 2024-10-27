@@ -5,8 +5,7 @@ import {
   PAYPAL_CLIENT_ID,
   PAYPAL_KEY_SECRET,
 } from "../config/config.js";
-import { convertPENToUSDProductList } from "../util/convertPENtoUSD.js";
-import { findAmountTotal } from "../util/logic.js";
+import { getCostUSD } from "../util/convertPENtoUSD.js";
 
 // const productList = [
 //   {
@@ -36,18 +35,37 @@ export class PaymentController {
 
     const { productList, checkoutData } = req.body;
 
-    // EN VEZ DE OBTENER UNA LISTA DE PRODUCTOS CON CADA PRODUCTO EN DÓLARES, puedo hallar el TOTAL en SOLES y eso convertirlo a DÓLARES, ya que NO es necesario que "purchase_units" tenga como VALOR un ARRAY de OBJETOS, puede ser un ARRAY de un SOLO OBJETO (dentro de este estarán todos los productos)
-    const productListPaypal = await convertPENToUSDProductList(
-      productList,
-      checkoutData.deliveryOption
-    );
-
-    console.log(productListPaypal);
-
     try {
+      // GUARDAMOS LOS DATOS EN LA BD Y LUEGO CREAMOS EL PEDIDO EN PAYPAL
+
+      const { itemListUSD, amountTotalUSD } = await getCostUSD(
+        productList,
+        checkoutData.deliveryOption
+      );
+
+      console.log("Item List USD: ", itemListUSD);
+      console.log("Amount Total USD: ", amountTotalUSD);
+
       const order = {
         intent: "CAPTURE",
-        purchase_units: productListPaypal,
+        purchase_units: [
+          {
+            reference_id: crypto.randomUUID(),
+            amount: {
+              currency_code: "USD",
+              value: amountTotalUSD,
+              // La propiedad "breakdown" es necesario solo si usamos la propiedad "items"
+              breakdown: {
+                item_total: {
+                  currency_code: "USD",
+                  value: amountTotalUSD,
+                },
+              },
+            },
+            // La propiedad "items" NO es OBLIGATORIIA según la Documentación de Paypal
+            items: itemListUSD,
+          },
+        ],
         payment_source: {
           paypal: {
             experience_context: {
