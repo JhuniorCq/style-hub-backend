@@ -129,14 +129,14 @@ export class PaymentController {
       );
 
       // res.send("Listo, el pedido ha sido pagado.");
-      // res.redirect("http://localhost:5173");
+      res.redirect("http://localhost:5173");
 
       // LA SOLUCIÓN PARA CONECTAR CON EL FRONTEND SERÍA -> Almacenar en la BD el ID del PEDIDO y también todos los datos necesarios (los datos tanto de los Productos como los del FORMS), y luego usar un "res.redirect(`http://localhost:5173/order-completion?orderId=${response.data.id}`)"
-      res.json({
-        success: true,
-        message: "Pago realizado con éxito",
-        orderData: response.data,
-      });
+      // res.json({
+      //   success: true,
+      //   message: "Pago realizado con éxito",
+      //   orderData: response.data,
+      // });
     } catch (err) {
       console.error("", err);
       next(err);
