@@ -32,7 +32,7 @@ export class ProductModel {
 
       // Validar que el idProductWarehouse EXISTE
       const [selectProductWarehouse] = await connection.query(
-        "SELECT id_product_warehouse, quantity FROM product_warehouse WHERE id_product_warehouse = ?",
+        "SELECT quantity FROM product_warehouse WHERE id_product_warehouse = ?",
         [idProductWarehouse]
       );
 
@@ -50,7 +50,7 @@ export class ProductModel {
       // Obtenemos el quantity del producto de la Tabla product_warehouse -> Para este entonces ya sabemos que idProductWarehouse SÍ existe
       const quantityProductWarehouse = selectProductWarehouse[0].quantity;
 
-      // Obtenemos el nuevo quantity del produco de la Tabla product_warehouse
+      // Obtenemos el nuevo quantity del producto de la Tabla product_warehouse
       const newQuantityProductWarehouse =
         quantityProductWarehouse - showQuantity;
 

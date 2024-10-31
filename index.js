@@ -3,6 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import { HOST, PORT } from "./src/config/config.js";
 import { errorHandler } from "./src/util/errorHandler.js";
+import { router as routerOrder } from "./src/routes/order.routes.js";
 import { router as routerPayment } from "./src/routes/payment.routes.js";
 import { router as routerProduct } from "./src/routes/product.routes.js";
 import { router as routerProductWarehouse } from "./src/routes/productWarehouse.routes.js";
@@ -20,6 +21,9 @@ app.use(express.static(path.resolve("src", "public")));
 app.get("/", (req, res, next) => {
   res.json({ message: `Hola, estás en ${req.url}` });
 });
+
+// Rutas de Order
+app.use("/order", routerOrder);
 
 // Rutas de Product
 app.use("/product", routerProduct);

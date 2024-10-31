@@ -33,7 +33,8 @@ export class ProductWarehouseController {
         productData,
       });
 
-      res.json({ message: result });
+      // res.json({ message: result });
+      res.json(result);
     } catch (err) {
       console.error(
         "Error en createProduct en productWarehouse.controller.js",

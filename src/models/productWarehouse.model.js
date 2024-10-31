@@ -60,7 +60,11 @@ export class ProductWarehouseModel {
         throw error;
       }
 
-      return `El producto "${name}" ha sido insertado con éxito.`;
+      // return `El producto "${name}" ha sido insertado con éxito en el almacén.`;
+      return {
+        message: "Producto insertado en el almacén",
+        dataInsert: insertProduct,
+      };
     } catch (err) {
       console.error(
         "Error en createProduct en productWarehouse.model.js",

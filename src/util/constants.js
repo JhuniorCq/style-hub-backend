@@ -10,3 +10,9 @@ export const PAYMENT_OPTIONS = {
 };
 
 export const SHIPPING_COST = 9;
+
+export const ORDER_STATES = {
+  PENDING: "Pending",
+  PAID: "Paid",
+  CANCELED: "Canceled",
+};
