@@ -30,7 +30,9 @@ export class OrderController {
         checkoutData,
       });
 
-      res.json({ message: result });
+      console.log(result);
+
+      res.json(result);
     } catch (err) {
       console.error("Error en createOrder en order.controller.js", err.message);
       next(err);

@@ -8,11 +8,16 @@ import { router as routerPayment } from "./src/routes/payment.routes.js";
 import { router as routerProduct } from "./src/routes/product.routes.js";
 import { router as routerProductWarehouse } from "./src/routes/productWarehouse.routes.js";
 import path from "node:path";
+import { URL_SHOP } from "./src/util/constants.js";
 
 const app = express();
 
 app.disabled("x-powered-by");
-app.use(cors());
+app.use(
+  cors({
+    origin: URL_SHOP,
+  })
+);
 app.use(morgan("dev"));
 app.use(express.json());
 

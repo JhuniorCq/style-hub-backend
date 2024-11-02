@@ -3,7 +3,13 @@ import { pool } from "../config/db.js";
 export class ProductModel {
   static async getProducts({}) {
     try {
-      const [result] = await pool.query("SELECT * FROM product");
+      // const [result] = await pool.query("SELECT * FROM product");
+      const [result] = await pool.query(`
+          SELECT id_product AS id, show_quantity AS showQuantity, pw.name, price, description, image, c.name AS category
+          FROM product p
+          INNER JOIN product_warehouse pw ON p.id_product_warehouse = pw.id_product_warehouse
+          INNER JOIN category c ON pw.id_category = c.id_category
+        `);
 
       return result;
     } catch (err) {

@@ -16,3 +16,5 @@ export const ORDER_STATES = {
   PAID: "Paid",
   CANCELED: "Canceled",
 };
+
+export const URL_SHOP = "http://localhost:5173";

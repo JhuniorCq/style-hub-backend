@@ -196,7 +196,18 @@ export class OrderModel {
       // Confirmamos los cambios
       await connection.commit();
 
-      return `El pedido N° ${checkoutData.idOrder} ha sido insertado exitosamente.`;
+      // return `El pedido N° ${checkoutData.idOrder} ha sido insertado exitosamente.`;
+      const responseCheckoutData = {
+        ...checkoutData,
+      };
+
+      delete responseCheckoutData.idOrder;
+      delete responseCheckoutData.idPayment;
+
+      return {
+        productList,
+        checkoutData: responseCheckoutData,
+      };
     } catch (err) {
       // Revertimos los cambios
       if (connection) {
