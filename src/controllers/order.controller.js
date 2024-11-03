@@ -1,5 +1,9 @@
 import dayjs from "dayjs";
 import { OrderModel } from "../models/order.model.js";
+import {
+  validateCheckoutData,
+  validateProductList,
+} from "../util/validations/orderValidations.js";
 
 export class OrderController {
   static async getOrders(req, res, next) {
@@ -15,22 +19,25 @@ export class OrderController {
       const { productList, checkoutData } = req.body;
 
       // VALIDAR LOS DATOS ENVIADOS POR EL USUARIO
+      const productListValidated = validateProductList(productList);
+      const checkoutDataValidated = validateCheckoutData(
+        checkoutData,
+        checkoutData.deliveryOption
+      );
 
-      // Agregamos las propiedades orderDate e id a checkoutData -> Esto lo haremos desde la misma validación
-
-      checkoutData.idOrder = crypto.randomUUID();
-      checkoutData.idPayment = crypto.randomUUID();
-
-      const now = dayjs();
-      checkoutData.orderDate = now.format("YYYY-MM-DD HH:mm:ss");
+      if (!productListValidated.success || !checkoutDataValidated.success) {
+        const error = new Error("Error en la Validación de los datos.");
+        error.statusCode = 400;
+        throw error;
+      }
 
       // ENVIAR LOS DATOS AL MODELO
       const result = await OrderModel.createOrder({
-        productList,
-        checkoutData,
+        productList: productListValidated.data,
+        checkoutData: checkoutDataValidated.data,
       });
 
-      console.log(result);
+      console.log("Estos son los datos enviados por el usuario: ", result);
 
       res.json(result);
     } catch (err) {

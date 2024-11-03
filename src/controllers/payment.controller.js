@@ -6,27 +6,10 @@ import {
   PAYPAL_KEY_SECRET,
 } from "../config/config.js";
 import { getCostUSD } from "../util/convertPENtoUSD.js";
-
-// const productList = [
-//   {
-//     id: 1,
-//     name: "Gorra",
-//     price: 10,
-//     quantity: 1,
-//   },
-//   {
-//     id: 2,
-//     name: "Camisa",
-//     price: 35,
-//     quantity: 1,
-//   },
-//   {
-//     id: 3,
-//     name: "Polo",
-//     price: 20,
-//     quantity: 2,
-//   },
-// ];
+import {
+  validateCheckoutData,
+  validateProductList,
+} from "../util/validations/orderValidations.js";
 
 export class PaymentController {
   static async createOrder(req, res, next) {
@@ -35,8 +18,31 @@ export class PaymentController {
 
     const { productList, checkoutData } = req.body;
 
+    console.log("Esto es lo que el usuario envió: ", req.body);
+
     try {
+      // VALIDAMOS LOS DATOS ENVIADOS POR EL USUARIO
+      const productListValidated = validateProductList(productList);
+      const checkoutDataValidated = validateCheckoutData(
+        checkoutData,
+        checkoutData.deliveryOption
+      );
+
+      if (!productListValidated.success || !checkoutDataValidated.success) {
+        const error = new Error("Error en la Validación de los datos.");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      console.log(
+        "Estos son los datos validados: ",
+        productListValidated.data,
+        checkoutDataValidated.data
+      );
+
       // GUARDAMOS LOS DATOS EN LA BD Y LUEGO CREAMOS EL PEDIDO EN PAYPAL
+
+      // Acá guardar los datos en la BD -> TODO: Crear una ruta el order para ELIMINAR UN PEDIDO CANCELADO
 
       const { itemListUSD, amountTotalUSD } = await getCostUSD(
         productList,
@@ -129,14 +135,14 @@ export class PaymentController {
       );
 
       // res.send("Listo, el pedido ha sido pagado.");
-      res.redirect("http://localhost:5173");
+      // res.redirect("http://localhost:5173");
 
       // LA SOLUCIÓN PARA CONECTAR CON EL FRONTEND SERÍA -> Almacenar en la BD el ID del PEDIDO y también todos los datos necesarios (los datos tanto de los Productos como los del FORMS), y luego usar un "res.redirect(`http://localhost:5173/order-completion?orderId=${response.data.id}`)"
-      // res.json({
-      //   success: true,
-      //   message: "Pago realizado con éxito",
-      //   orderData: response.data,
-      // });
+      res.json({
+        success: true,
+        message: "Pago realizado con éxito",
+        orderData: response.data,
+      });
     } catch (err) {
       console.error("", err);
       next(err);

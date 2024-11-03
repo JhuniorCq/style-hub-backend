@@ -20,6 +20,23 @@ export class ProductController {
     } catch (err) {
       console.error("Error en getProduct en product.controller.js"),
         err.message;
+      next(err);
+    }
+  }
+
+  static async getProductShowQuantity(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      const result = await ProductModel.getProductShowQuantity({ id });
+
+      res.json(result);
+    } catch (err) {
+      console.error(
+        "Error en getProductShowQuantity en product.controller.js",
+        err.message
+      );
+      next(err);
     }
   }
 

@@ -18,3 +18,5 @@ export const ORDER_STATES = {
 };
 
 export const URL_SHOP = "http://localhost:5173";
+
+export const DEFAULT_SELECT_VALUE = "notValid";

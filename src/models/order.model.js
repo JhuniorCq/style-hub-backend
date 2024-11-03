@@ -56,21 +56,42 @@ export class OrderModel {
 
       // Insertamos datos del comprador
       let insertCustomer;
-      if (checkoutData.paymentOption === PAYMENT_OPTIONS.PAYPAL) {
-        // Dato: Para este entonces ya debe estar validado que las opciones de PAGO solo son TRES
-      } else {
-        // Inserción si el Tipo de Pago es por "Yape" o "Depósito"
-        [insertCustomer] = await connection.query(
-          "INSERT INTO customer (first_name, last_name, dni, cell_phone, email) VALUES (?, ?, ?, ?, ?)",
-          [
-            checkoutData.firstName,
-            checkoutData.lastName,
-            checkoutData.dni,
-            checkoutData.cellPhone,
-            checkoutData.email,
-          ]
-        );
-      }
+      [insertCustomer] = await connection.query(
+        "INSERT INTO customer (first_name, last_name, dni, cell_phone, email) VALUES (?, ?, ?, ?, ?)",
+        [
+          checkoutData.firstName,
+          checkoutData.lastName,
+          checkoutData.dni,
+          checkoutData.cellPhone,
+          checkoutData.email,
+        ]
+      );
+      // if (checkoutData.paymentOption === PAYMENT_OPTIONS.PAYPAL) {
+      //   // Dato: Para este entonces ya debe estar validado que las opciones de PAGO solo son TRES
+      //   [insertCustomer] = await connection.query(
+      //     "INSERT INTO customer (first_name, last_name, dni, cell_phone, email, name_paypal, email_paypal)",
+      //     [
+      //       checkoutData.firstName,
+      //       checkoutData.lastName,
+      //       checkoutData.dni,
+      //       checkoutData.cellPhone,
+      //       checkoutData.email,
+      //       checkoutData,
+      //     ]
+      //   );
+      // } else {
+      //   // Inserción si el Tipo de Pago es por "Yape" o "Depósito"
+      //   [insertCustomer] = await connection.query(
+      //     "INSERT INTO customer (first_name, last_name, dni, cell_phone, email) VALUES (?, ?, ?, ?, ?)",
+      //     [
+      //       checkoutData.firstName,
+      //       checkoutData.lastName,
+      //       checkoutData.dni,
+      //       checkoutData.cellPhone,
+      //       checkoutData.email,
+      //     ]
+      //   );
+      // }
 
       if (insertCustomer.affectedRows === 0) {
         const error = new Error(

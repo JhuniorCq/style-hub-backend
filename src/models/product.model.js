@@ -3,13 +3,15 @@ import { pool } from "../config/db.js";
 export class ProductModel {
   static async getProducts({}) {
     try {
-      // const [result] = await pool.query("SELECT * FROM product");
       const [result] = await pool.query(`
           SELECT id_product AS id, show_quantity AS showQuantity, pw.name, price, description, image, c.name AS category
           FROM product p
           INNER JOIN product_warehouse pw ON p.id_product_warehouse = pw.id_product_warehouse
           INNER JOIN category c ON pw.id_category = c.id_category
         `);
+
+      // Hacemos que cada precio sea devuelto como un número y no como cadena
+      result.forEach((product) => (product.price = Number(product.price)));
 
       return result;
     } catch (err) {
@@ -22,6 +24,25 @@ export class ProductModel {
     try {
     } catch (err) {
       console.error("Error en getProduct en product.model.js"), err.message;
+      throw err;
+    }
+  }
+
+  static async getProductShowQuantity({ id }) {
+    try {
+      const [result] = await pool.query(
+        "SELECT show_quantity FROM product WHERE id_product = ?",
+        [id]
+      );
+
+      return {
+        showQuantity: result[0].show_quantity,
+      };
+    } catch (err) {
+      console.error(
+        "Error en getProductShowQuantity en product.model.js",
+        err.message
+      );
       throw err;
     }
   }
