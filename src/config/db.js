@@ -14,6 +14,7 @@ const config = {
   database: DB_DATABASE,
   port: DB_PORT,
   // connectionLimit: 10 -> Si no se especifica, por defecto es 10
+  decimalNumbers: true,
 };
 
 const pool = mysql.createPool(config);

@@ -5,5 +5,6 @@ const router = Router();
 
 router.get("/", OrderController.getOrders);
 router.post("/", OrderController.createOrder);
+router.delete("/:id", OrderController.deleteOrder);
 
 export { router };

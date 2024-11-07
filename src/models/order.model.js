@@ -6,10 +6,104 @@ import {
   SHIPPING_COST,
 } from "../util/constants.js";
 import { findAmountTotal } from "../util/logic.js";
+import dayjs from "dayjs";
 
 export class OrderModel {
-  static async getOrders({}) {
+  static async getOrders({ deliveryOption, paymentOption }) {
     try {
+      let queryOrder = `
+          SELECT 
+            oc.id_order AS idOrder,
+            c.first_name AS firstName, 
+              c.last_name AS lastName,
+              c.dni,
+              c.cell_phone AS cellPhone,
+              c.email,
+              c.name_paypal AS namePaypal,
+              c.email_paypal AS emailPaypal,
+              l.address,
+              l.district,
+              l.province,
+              l.department,
+              l.country,
+              oc.order_date AS orderDate,
+              oc.status,
+              oc.delivery_type AS deliveryOption,
+              p.amount,
+              p.payment_type AS paymentOption
+          FROM order_customer oc 
+          INNER JOIN customer c ON oc.id_customer = c.id_customer
+          LEFT JOIN location l ON c.id_customer = l.id_customer
+          INNER JOIN payment p ON oc.id_order = p.id_order
+          WHERE 1=1
+      `;
+
+      const params = [];
+
+      // Filtro en base al Tipo de Entrega
+      if (deliveryOption) {
+        queryOrder += "AND LOWER(oc.delivery_type) = LOWER(?)";
+        params.push(deliveryOption);
+      }
+
+      // Filtro en base al Tipo de Pago
+      if (paymentOption) {
+        queryOrder += "AND LOWER(p.payment_type) = LOWER(?)";
+        params.push(paymentOption);
+      }
+
+      // Ordenamiento Ascendente por defecto (en base a la fecha de creación del pedido)
+      queryOrder += "ORDER BY oc.order_date";
+
+      // Obtener la orden
+      const [orders] = await pool.query(queryOrder, params);
+
+      // Obtener la orden completa (con cada producto en cada orden)
+      for (const order of orders) {
+        const { idOrder, orderDate, deliveryOption, paymentOption } = order;
+
+        // Formatear la fecha
+        const unformattedDate = dayjs(orderDate);
+        const formattedDate = unformattedDate.format("YYYY-MM-DD HH:mm:ss");
+        order.orderDate = formattedDate;
+
+        if (deliveryOption === DELIVERY_OPTIONS.PICK_UP) {
+          delete order.address;
+          delete order.district;
+          delete order.province;
+          delete order.department;
+          delete order.country;
+        }
+
+        if (paymentOption !== PAYMENT_OPTIONS.PAYPAL) {
+          delete order.namePaypal;
+          delete order.emailPaypal;
+        }
+
+        // Asignar los detalles a cada orden
+        const [result] = await pool.query(
+          `
+            SELECT  
+              od.id_order AS idOrder,
+              od.id_order_details AS idOrderDetails,
+              od.quantity,
+              od.unit_price AS unitPrice,
+              pw.name,
+              ca.name AS category,
+              pw.price AS precioOriginalAlmacen
+            FROM order_details od
+            INNER JOIN product p ON od.id_product = p.id_product
+            INNER JOIN product_warehouse pw ON p.id_product_warehouse = pw.id_product_warehouse
+            INNER JOIN category ca ON pw.id_category = ca.id_category
+            WHERE id_order = ?
+        `,
+          [idOrder]
+        );
+
+        order.orderDetails = result;
+      }
+
+      return orders;
     } catch (err) {
       console.error("Error en getOrders en order.controller.js", err.message);
       throw err;
@@ -235,13 +329,22 @@ export class OrderModel {
         await connection.rollback();
       }
 
-      console.error("Error en createOrder en order.controller.js", err.message);
+      console.error("Error en createOrder en order.model.js", err.message);
       throw err;
     } finally {
       if (connection) {
         // Liberamos la conexión
         connection.release();
       }
+    }
+  }
+
+  static async deleteOrder({ id }) {
+    try {
+    } catch (err) {
+      console.error("Error en deleteOrder en order.model.js", err.message);
+      throw err;
+    } finally {
     }
   }
 }

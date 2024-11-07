@@ -5,9 +5,6 @@ export class ProductWarehouseModel {
     try {
       const [result] = await pool.query("SELECT * FROM product_warehouse");
 
-      // Hacemos que cada precio sea devuelto como un número y no como cadena
-      result.forEach((product) => (product.price = Number(product.price)));
-
       return result;
     } catch (err) {
       console.error(

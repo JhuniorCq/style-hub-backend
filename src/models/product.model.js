@@ -10,9 +10,6 @@ export class ProductModel {
           INNER JOIN category c ON pw.id_category = c.id_category
         `);
 
-      // Hacemos que cada precio sea devuelto como un número y no como cadena
-      result.forEach((product) => (product.price = Number(product.price)));
-
       return result;
     } catch (err) {
       console.error("Error en getProducts en product.model.js", err.message);
@@ -23,7 +20,7 @@ export class ProductModel {
   static async getProduct({}) {
     try {
     } catch (err) {
-      console.error("Error en getProduct en product.model.js"), err.message;
+      console.error("Error en getProduct en product.model.js", err.message);
       throw err;
     }
   }

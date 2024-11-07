@@ -49,7 +49,6 @@ const checkoutDataSchema = z.object({
 });
 
 export const validateProductList = (productList) => {
-  console.log("Validando ProductList");
   return productListSchema.safeParse(productList);
 };
 
