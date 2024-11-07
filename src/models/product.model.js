@@ -44,7 +44,6 @@ export class ProductModel {
     }
   }
 
-  // Con este método CREAMOS un Producto en la Tabla "product", el cual tendrá una cantidad específica, pero para aumentar o disminuir esa cantidad manualmente, hay otros métodos
   static async createProduct({ productData }) {
     let connection;
 

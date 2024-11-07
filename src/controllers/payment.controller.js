@@ -11,14 +11,10 @@ import {
   validateProductList,
 } from "../util/validations/orderValidations.js";
 import { OrderModel } from "../models/order.model.js";
-import { pool } from "../config/db.js";
 import { PaymentModel } from "../models/payment.model.js";
 
 export class PaymentController {
   static async createOrder(req, res, next) {
-    // PEN no acepta creo :,v , USD y MXN sí
-    // const productList = req.body;
-
     const { productList, checkoutData } = req.body;
 
     console.log("Esto es lo que el usuario envió: ", req.body);
@@ -139,17 +135,6 @@ export class PaymentController {
           },
         }
       );
-
-      // res.send("Listo, el pedido ha sido pagado.");
-      // res.redirect("http://localhost:5173");
-
-      // LA SOLUCIÓN PARA CONECTAR CON EL FRONTEND SERÍA -> Almacenar en la BD el ID del PEDIDO y también todos los datos necesarios (los datos tanto de los Productos como los del FORMS), y luego usar un "res.redirect(`http://localhost:5173/order-completion?orderId=${response.data.id}`)"
-
-      /*
-        response.data devuelve un objeto, para obtener el NOMBRE debemos acceder a la propiedad payer, luego a name
-
-        Para acceder al ID del PEDIDO que enviamos en /create-order debemos acceder a la propiedad purchase_units[0].reference_id
-      */
 
       // Obtenemos algunos datos del pedido
       const idOrder = response.data.purchase_units[0].reference_id;

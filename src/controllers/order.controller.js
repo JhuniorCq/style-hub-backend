@@ -1,10 +1,8 @@
-import dayjs from "dayjs";
 import { OrderModel } from "../models/order.model.js";
 import {
   validateCheckoutData,
   validateProductList,
 } from "../util/validations/orderValidations.js";
-import { DELIVERY_OPTIONS } from "../util/constants.js";
 
 export class OrderController {
   static async getOrders(req, res, next) {
