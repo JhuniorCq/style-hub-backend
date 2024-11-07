@@ -47,7 +47,10 @@ export class OrderController {
         checkoutData: checkoutDataValidated.data,
       });
 
-      console.log("Estos son los datos enviados por el usuario: ", result);
+      console.log(
+        "Respuesta luego de almacenar los datos del pedido: ",
+        result
+      );
 
       res.json(result);
     } catch (err) {
@@ -65,7 +68,7 @@ export class OrderController {
       const result = await OrderModel.deleteOrder({ id });
 
       res.json({
-        message: `Eliminaré el pedido con el ID: ${id}`,
+        message: result,
       });
     } catch (err) {
       console.error("Error en deleteOrder en order.controller.js", err.message);

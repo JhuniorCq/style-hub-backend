@@ -10,6 +10,9 @@ import {
   validateCheckoutData,
   validateProductList,
 } from "../util/validations/orderValidations.js";
+import { OrderModel } from "../models/order.model.js";
+import { pool } from "../config/db.js";
+import { PaymentModel } from "../models/payment.model.js";
 
 export class PaymentController {
   static async createOrder(req, res, next) {
@@ -40,9 +43,11 @@ export class PaymentController {
         checkoutDataValidated.data
       );
 
-      // GUARDAMOS LOS DATOS EN LA BD Y LUEGO CREAMOS EL PEDIDO EN PAYPAL
-
-      // Acá guardar los datos en la BD -> TODO: Crear una ruta el order para ELIMINAR UN PEDIDO CANCELADO
+      // GUARDAMOS LOS DATOS EN LA BD -> Si ocurre un error en la creación del pedido, createOrder traerá un ERROR
+      const { checkoutData: orderData } = await OrderModel.createOrder({
+        productList: productListValidated.data,
+        checkoutData: checkoutDataValidated.data,
+      });
 
       const { itemListUSD, amountTotalUSD } = await getCostUSD(
         productList,
@@ -52,11 +57,12 @@ export class PaymentController {
       console.log("Item List USD: ", itemListUSD);
       console.log("Amount Total USD: ", amountTotalUSD);
 
+      // CREAMOS EL PEDIDO EN PAYPAL
       const order = {
         intent: "CAPTURE",
         purchase_units: [
           {
-            reference_id: crypto.randomUUID(),
+            reference_id: orderData.idOrder, // Pasamos el ID del pedido para recuperarlo en /capture-order
             amount: {
               currency_code: "USD",
               value: amountTotalUSD,
@@ -79,8 +85,8 @@ export class PaymentController {
               landing_page: "NO_PREFERENCE",
               user_action: "PAY_NOW",
               return_url: `${HOST}/payment/capture-order`,
-              // cancel_url: `${HOST}/payment/cancel-order`,
-              cancel_url: "http://localhost:5173/checkout",
+              cancel_url: `${HOST}/payment/cancel-order?idOrder=${orderData.idOrder}`,
+              // cancel_url: "http://localhost:5173/checkout",
             },
           },
         },
@@ -138,9 +144,32 @@ export class PaymentController {
       // res.redirect("http://localhost:5173");
 
       // LA SOLUCIÓN PARA CONECTAR CON EL FRONTEND SERÍA -> Almacenar en la BD el ID del PEDIDO y también todos los datos necesarios (los datos tanto de los Productos como los del FORMS), y luego usar un "res.redirect(`http://localhost:5173/order-completion?orderId=${response.data.id}`)"
+
+      /*
+        response.data devuelve un objeto, para obtener el NOMBRE debemos acceder a la propiedad payer, luego a name
+
+        Para acceder al ID del PEDIDO que enviamos en /create-order debemos acceder a la propiedad purchase_units[0].reference_id
+      */
+
+      // Obtenemos algunos datos del pedido
+      const idOrder = response.data.purchase_units[0].reference_id;
+      const namePaypal = `${response.data.payer.name.given_name} ${response.data.payer.name.surname}`;
+      const emailPaypal = response.data.payer.email_address;
+
+      const resultUpdate = await PaymentModel.updateOrder({
+        idOrder,
+        namePaypal,
+        emailPaypal,
+      });
+
       res.json({
         success: true,
         message: "Pago realizado con éxito",
+        idOrder: response.data.purchase_units[0].reference_id,
+        name: response.data.payer.name.given_name,
+        surname: response.data.payer.name.surname,
+        email: response.data.payer.email_address,
+        update: resultUpdate,
         orderData: response.data,
       });
     } catch (err) {
@@ -151,8 +180,14 @@ export class PaymentController {
 
   static async cancelOrder(req, res, next) {
     try {
-      res.json({ success: false });
-      // res.redirect("/");
+      const { idOrder } = req.query;
+
+      console.log(req.originalUrl, idOrder);
+
+      const resultDelete = await OrderModel.deleteOrder({ id: idOrder });
+
+      res.json({ success: resultDelete });
+      // res.redirect("http://localhost:5173/checkout");
     } catch (err) {
       console.error("", err);
       next(err);

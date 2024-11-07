@@ -48,7 +48,7 @@ export class ProductWarehouseModel {
       console.log(selectCategory);
 
       // Insertar datos en Product
-      const [insertProduct] = await pool.query(
+      const insertProduct = await pool.query(
         "INSERT INTO product_warehouse (name, price, description, id_category, image, quantity) VALUES (?, ?, ?, ?, ?, ?)",
         [name, price, description, idCategory, image, quantity]
       );
@@ -56,7 +56,7 @@ export class ProductWarehouseModel {
       console.log(insertProduct);
 
       // Lanzar error si no se hizo alguna inserción
-      if (insertProduct.affectedRows === 0) {
+      if (insertProduct[0].affectedRows === 0) {
         const error = new Error("Error al realizar la inserción del producto.");
         error.statusCode = 500;
         throw error;

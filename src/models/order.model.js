@@ -84,7 +84,6 @@ export class OrderModel {
         const [result] = await pool.query(
           `
             SELECT  
-              od.id_order AS idOrder,
               od.id_order_details AS idOrderDetails,
               od.quantity,
               od.unit_price AS unitPrice,
@@ -311,12 +310,11 @@ export class OrderModel {
       // Confirmamos los cambios
       await connection.commit();
 
-      // return `El pedido N° ${checkoutData.idOrder} ha sido insertado exitosamente.`;
+      // Traer con SELECTs los datos almacenados
       const responseCheckoutData = {
         ...checkoutData,
       };
 
-      delete responseCheckoutData.idOrder;
       delete responseCheckoutData.idPayment;
 
       return {
@@ -340,11 +338,108 @@ export class OrderModel {
   }
 
   static async deleteOrder({ id }) {
+    let connection;
     try {
+      // Obtenemos una conexión del pool
+      connection = await pool.getConnection();
+
+      const [selectOrder] = await connection.query(
+        "SELECT id_customer, delivery_type FROM order_customer WHERE id_order = ?",
+        [id]
+      ); // Uso del connection en el SELECT para ahorrar recursos
+
+      if (selectOrder.length === 0) {
+        const error = new Error(`El pedido "${id}" no existe.`);
+        error.statusCode = 404;
+
+        throw error;
+      }
+
+      // Obtenemos el id_customer del pedido
+      const { id_customer: idCustomer, delivery_type: deliveryOption } =
+        selectOrder[0];
+
+      // Iniciamos la Transacción
+      await connection.beginTransaction();
+
+      // Eliminamos los datos de order_details
+      const [deleteOrderDetails] = await connection.query(
+        "DELETE FROM order_details WHERE id_order = ?",
+        [id]
+      );
+
+      if (deleteOrderDetails.affectedRows === 0) {
+        const error = new Error("No se eliminaron los datos de order_details");
+        error.statusCode = 500;
+        throw error;
+      }
+
+      // Eliminamos los datos de payment
+      const [deletePayment] = await connection.query(
+        "DELETE FROM payment WHERE id_order = ?",
+        [id]
+      );
+
+      if (deletePayment.affectedRows === 0) {
+        const error = new Error("No se eliminaron los datos de payment");
+        error.statusCode = 500;
+        throw error;
+      }
+
+      // Eliminamos los datos de order
+      const [deleteOrder] = await connection.query(
+        "DELETE FROM order_customer WHERE id_order = ?",
+        [id]
+      );
+
+      if (deleteOrder.affectedRows === 0) {
+        const error = new Error("No se eliminaron los datos de order");
+        error.statusCode = 500;
+        throw error;
+      }
+
+      if (deliveryOption === DELIVERY_OPTIONS.SHIPPING) {
+        // Eliminamos los datos de location
+        const [deleteLocation] = await connection.query(
+          "DELETE FROM location WHERE id_customer = ?",
+          [idCustomer]
+        );
+
+        if (deleteLocation.affectedRows === 0) {
+          const error = new Error("No se eliminaron los datos de location");
+          error.statusCode = 500;
+          throw error;
+        }
+      }
+
+      // Eliminamos los datos de customer
+      const [deleteCustomer] = await connection.query(
+        "DELETE FROM customer WHERE id_customer = ?",
+        [idCustomer]
+      );
+
+      if (deleteCustomer.affectedRows === 0) {
+        const error = new Error("No se eliminaron los datos de customer");
+        error.statusCode = 500;
+        throw error;
+      }
+
+      // Confirmamos los cambios
+      await connection.commit();
+
+      return `Se ha eliminado exitosamente el pedido con ID "${id}"`;
     } catch (err) {
+      if (connection) {
+        // Revertimos los cambios
+        await connection.rollback();
+      }
+
       console.error("Error en deleteOrder en order.model.js", err.message);
       throw err;
     } finally {
+      if (connection) {
+        connection.release();
+      }
     }
   }
 }
