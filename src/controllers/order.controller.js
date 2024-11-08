@@ -22,6 +22,22 @@ export class OrderController {
     }
   }
 
+  static async getOrder(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      const order = await OrderModel.getOrder({ id });
+
+      res.json({
+        success: true,
+        data: order,
+      });
+    } catch (err) {
+      console.error("Error en getOrder en order.controller.js", err.message);
+      next(err);
+    }
+  }
+
   static async createOrder(req, res, next) {
     try {
       const { productList, checkoutData } = req.body;
@@ -49,6 +65,8 @@ export class OrderController {
         "Respuesta luego de almacenar los datos del pedido: ",
         result
       );
+
+      // Enviar un correo al usuario
 
       res.json(result);
     } catch (err) {

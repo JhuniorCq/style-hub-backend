@@ -4,6 +4,9 @@ export const PORT = process.env.PORT ?? 1234;
 // HOST DEL SERVIDOR LOCAL
 export const HOST = `http://localhost:${PORT}`;
 
+// HOST DEL CLIENTE LOCAL
+export const HOST_CLIENT = `http://localhost:5173`;
+
 // DATOS PARA LA BD
 export const DB_HOST = process.env.DB_HOST;
 export const DB_USER = process.env.DB_USER;

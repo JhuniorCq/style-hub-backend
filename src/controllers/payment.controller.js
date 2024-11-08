@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
   HOST,
+  HOST_CLIENT,
   PAYPAL_API,
   PAYPAL_CLIENT_ID,
   PAYPAL_KEY_SECRET,
@@ -39,11 +40,18 @@ export class PaymentController {
         checkoutDataValidated.data
       );
 
-      // GUARDAMOS LOS DATOS EN LA BD -> Si ocurre un error en la creación del pedido, createOrder traerá un ERROR
-      const { checkoutData: orderData } = await OrderModel.createOrder({
-        productList: productListValidated.data,
-        checkoutData: checkoutDataValidated.data,
-      });
+      // GUARDAMOS LOS DATOS EN LA BD -> Si ocurre un error en la creación del pedido, createOrder devolverá success: false
+      const { success: orderSuccess, data: orderData } =
+        await OrderModel.createOrder({
+          productList: productListValidated.data,
+          checkoutData: checkoutDataValidated.data,
+        });
+
+      if (!orderSuccess) {
+        const error = new Error("Hubo un error en la creación del pedido.");
+        error.statusCode = 500;
+        throw error;
+      }
 
       const { itemListUSD, amountTotalUSD } = await getCostUSD(
         productList,
@@ -147,16 +155,17 @@ export class PaymentController {
         emailPaypal,
       });
 
-      res.json({
-        success: true,
-        message: "Pago realizado con éxito",
-        idOrder: response.data.purchase_units[0].reference_id,
-        name: response.data.payer.name.given_name,
-        surname: response.data.payer.name.surname,
-        email: response.data.payer.email_address,
-        update: resultUpdate,
-        orderData: response.data,
-      });
+      // res.json({
+      //   success: true,
+      //   message: "Pago realizado con éxito",
+      //   idOrder: response.data.purchase_units[0].reference_id,
+      //   name: response.data.payer.name.given_name,
+      //   surname: response.data.payer.name.surname,
+      //   email: response.data.payer.email_address,
+      //   update: resultUpdate,
+      //   orderData: response.data,
+      // });
+      res.redirect(`${HOST_CLIENT}/order-completion?idOrder=${idOrder}`);
     } catch (err) {
       console.error("", err);
       next(err);

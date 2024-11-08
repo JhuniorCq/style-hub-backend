@@ -1,3 +1,4 @@
+import { date } from "zod";
 import { pool } from "../config/db.js";
 import {
   DELIVERY_OPTIONS,
@@ -99,12 +100,102 @@ export class OrderModel {
           [idOrder]
         );
 
-        order.orderDetails = result;
+        order.productList = result;
       }
 
       return orders;
     } catch (err) {
       console.error("Error en getOrders en order.controller.js", err.message);
+      throw err;
+    }
+  }
+
+  static async getOrder({ id }) {
+    try {
+      // Obtener la orden
+      const [selectOrder] = await pool.query(
+        `
+          SELECT 
+            oc.id_order AS idOrder,
+            c.first_name AS firstName, 
+              c.last_name AS lastName,
+              c.dni,
+              c.cell_phone AS cellPhone,
+              c.email,
+              c.name_paypal AS namePaypal,
+              c.email_paypal AS emailPaypal,
+              l.address,
+              l.district,
+              l.province,
+              l.department,
+              l.country,
+              oc.order_date AS orderDate,
+              oc.status,
+              oc.delivery_type AS deliveryOption,
+              p.amount,
+              p.payment_type AS paymentOption
+          FROM order_customer oc 
+          INNER JOIN customer c ON oc.id_customer = c.id_customer
+          LEFT JOIN location l ON c.id_customer = l.id_customer
+          INNER JOIN payment p ON oc.id_order = p.id_order
+          WHERE oc.id_order = ?
+        `,
+        [id]
+      );
+
+      if (selectOrder.length === 0) {
+        const error = new Error("El pedido no existe.");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const order = selectOrder[0];
+
+      const { orderDate, deliveryOption, paymentOption } = order;
+
+      // Formatear la fecha
+      const unformattedDate = dayjs(orderDate);
+      const formattedDate = unformattedDate.format("YYYY-MM-DD HH:mm:ss");
+      order.orderDate = formattedDate;
+
+      if (deliveryOption === DELIVERY_OPTIONS.PICK_UP) {
+        delete order.address;
+        delete order.district;
+        delete order.province;
+        delete order.department;
+        delete order.country;
+      }
+
+      if (paymentOption !== PAYMENT_OPTIONS.PAYPAL) {
+        delete order.namePaypal;
+        delete order.emailPaypal;
+      }
+
+      // Obtener la orden completa
+      const [selectOrderDetails] = await pool.query(
+        `
+        SELECT
+          p.id_product AS id,
+          od.quantity,
+          od.unit_price AS price,
+          pw.name,
+          pw.image,
+          ca.name AS category,
+          pw.price AS precioOriginalAlmacen
+        FROM order_details od
+        INNER JOIN product p ON od.id_product = p.id_product
+        INNER JOIN product_warehouse pw ON p.id_product_warehouse = pw.id_product_warehouse
+        INNER JOIN category ca ON pw.id_category = ca.id_category
+        WHERE id_order = ?
+      `,
+        [id]
+      );
+
+      order.productList = selectOrderDetails;
+
+      return order;
+    } catch (err) {
+      console.error("Error en getOrder en order.model.js");
       throw err;
     }
   }
@@ -149,13 +240,15 @@ export class OrderModel {
 
       // Insertamos datos del comprador
       const [insertCustomer] = await connection.query(
-        "INSERT INTO customer (first_name, last_name, dni, cell_phone, email) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO customer (first_name, last_name, dni, cell_phone, email, name_paypal, email_paypal) VALUES (?, ?, ?, ?, ?, ?, ?)",
         [
           checkoutData.firstName,
           checkoutData.lastName,
           checkoutData.dni,
           checkoutData.cellPhone,
           checkoutData.email,
+          "-",
+          "-",
         ]
       );
 
@@ -288,11 +381,20 @@ export class OrderModel {
         ...checkoutData,
       };
 
+      responseCheckoutData.productList = productList;
       delete responseCheckoutData.idPayment;
 
+      // return {
+      //   success: true,
+      //   data: {
+      //     productList,
+      //     checkoutData: responseCheckoutData,
+      //   },
+      // };
+
       return {
-        productList,
-        checkoutData: responseCheckoutData,
+        success: true,
+        data: responseCheckoutData,
       };
     } catch (err) {
       // Revertimos los cambios
