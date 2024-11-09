@@ -376,21 +376,12 @@ export class OrderModel {
       // Confirmamos los cambios
       await connection.commit();
 
-      // Traer con SELECTs los datos almacenados
       const responseCheckoutData = {
         ...checkoutData,
       };
 
       responseCheckoutData.productList = productList;
       delete responseCheckoutData.idPayment;
-
-      // return {
-      //   success: true,
-      //   data: {
-      //     productList,
-      //     checkoutData: responseCheckoutData,
-      //   },
-      // };
 
       return {
         success: true,

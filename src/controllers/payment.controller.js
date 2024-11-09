@@ -155,16 +155,6 @@ export class PaymentController {
         emailPaypal,
       });
 
-      // res.json({
-      //   success: true,
-      //   message: "Pago realizado con éxito",
-      //   idOrder: response.data.purchase_units[0].reference_id,
-      //   name: response.data.payer.name.given_name,
-      //   surname: response.data.payer.name.surname,
-      //   email: response.data.payer.email_address,
-      //   update: resultUpdate,
-      //   orderData: response.data,
-      // });
       res.redirect(`${HOST_CLIENT}/order-completion?idOrder=${idOrder}`);
     } catch (err) {
       console.error("", err);
@@ -180,8 +170,8 @@ export class PaymentController {
 
       const resultDelete = await OrderModel.deleteOrder({ id: idOrder });
 
-      res.json({ success: resultDelete });
-      // res.redirect("http://localhost:5173/checkout");
+      // res.json({ success: resultDelete });
+      res.redirect("http://localhost:5173/checkout");
     } catch (err) {
       console.error("", err);
       next(err);
