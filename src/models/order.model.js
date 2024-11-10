@@ -289,6 +289,8 @@ export class OrderModel {
         }
       }
 
+      // Si hago que todos los datos enviados por el usuario se envien por el purchase_units, y que en capture-order se cree el pedido, entonces para INSERTAR los DATOS DEL PEDIDO lo mejor sería crear una variable "query" y otra "params" las cuales tendrán un valor diferente según el "TIPO DE PAGO"
+
       // Insertamos los datos del pedido
       const [insertOrder] = await connection.query(
         "INSERT INTO order_customer (id_order, order_date, status, delivery_type, id_customer) VALUES (?, ?, ?, ?, ?)",
