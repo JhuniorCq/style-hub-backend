@@ -41,17 +41,18 @@ export class PaymentController {
       );
 
       // GUARDAMOS LOS DATOS EN LA BD -> Si ocurre un error en la creación del pedido, createOrder devolverá success: false
-      const { success: orderSuccess, data: orderData } =
+      const { /*success: orderSuccess,*/ data: orderData } =
         await OrderModel.createOrder({
           productList: productListValidated.data,
           checkoutData: checkoutDataValidated.data,
         });
 
-      if (!orderSuccess) {
-        const error = new Error("Hubo un error en la creación del pedido.");
-        error.statusCode = 500;
-        throw error;
-      }
+      // Esto NO porque OrderModel.createOrder siempre devuelve un success: true
+      // if (!orderSuccess) {
+      //   const error = new Error("Hubo un error en la creación del pedido.");
+      //   error.statusCode = 500;
+      //   throw error;
+      // }
 
       const { itemListUSD, amountTotalUSD } = await getCostUSD(
         productList,
@@ -149,15 +150,28 @@ export class PaymentController {
       const namePaypal = `${response.data.payer.name.given_name} ${response.data.payer.name.surname}`;
       const emailPaypal = response.data.payer.email_address;
 
-      const resultUpdate = await PaymentModel.updateOrder({
+      // Obtenemos la lista de productos del pedido para disminuir la cantidad X de cada producto a la cantidad de ese producto en la BD
+      const resultOrder = await OrderModel.getOrder({ id: idOrder });
+      console.log(resultOrder);
+      const {
+        data: { productList },
+      } = resultOrder;
+
+      await PaymentModel.updateOrder({
         idOrder,
         namePaypal,
         emailPaypal,
+        productList,
       });
 
       res.redirect(`${HOST_CLIENT}/order-completion?idOrder=${idOrder}`);
     } catch (err) {
-      console.error("", err);
+      console.error(
+        "Error en captureOrder en payment.controller.js",
+        err.message
+      );
+
+      // Cuando ocurre un error en captureOrder puedo hacer que me redireccione al front a una vista especial y ya NO uso el next(err), porque esto hará que el navegador del usuario se dirija a la URL de este servidor mostrándo como respuesta un JSON del error
       next(err);
     }
   }
@@ -173,7 +187,10 @@ export class PaymentController {
       // res.json({ success: resultDelete });
       res.redirect("http://localhost:5173/checkout");
     } catch (err) {
-      console.error("", err);
+      console.error(
+        "Error en cancelOrder en payment.controller.js",
+        err.message
+      );
       next(err);
     }
   }

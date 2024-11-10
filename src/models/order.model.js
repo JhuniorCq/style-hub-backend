@@ -193,7 +193,11 @@ export class OrderModel {
 
       order.productList = selectOrderDetails;
 
-      return order;
+      // return order;
+      return {
+        success: true,
+        data: order,
+      };
     } catch (err) {
       console.error("Error en getOrder en order.model.js");
       throw err;
@@ -221,7 +225,7 @@ export class OrderModel {
           throw error;
         }
 
-        // Comprabamos que la cantidad solicitada está permitida
+        // Comprobamos que la cantidad solicitada está permitida
         const newQuantityShowProduct =
           productSelect.show_quantity - product.quantity;
 
@@ -350,27 +354,28 @@ export class OrderModel {
         }
 
         // Actualizamos el show_quantity del producto de la tabla product (Este SELECT se repite en el for de arriba, tal vez se puede mejorar)
-        const [productSelect] = await connection.query(
-          "SELECT show_quantity FROM product WHERE id_product = ?",
-          [product.id]
-        );
+        // ESTA A ACTUALIZACIÓN NO SE DEBE HACER, YA QUE EL ESTADO DEL PEDIDO ESTÁ EN "PENDIENTE AÚN" -> LO QUE DEBE PASAR ES QUE SE LE DEBE ENVIAR AL USUARIO UN CORREO PARA QUE PAGUE EN UN PLAZO MÁXIMO DE 48 HORAS -> SI EL PAGO FUE POR PAYPAL IGUAL NO SE DEBE DESCONTAR EN create-order, YA CUANDO SE ESTÉ EN capture-order AHI SE DEBE DESCONTAR
+        // const [productSelect] = await connection.query(
+        //   "SELECT show_quantity FROM product WHERE id_product = ?",
+        //   [product.id]
+        // );
 
-        const newQuantityShowProduct =
-          productSelect[0].show_quantity - product.quantity;
+        // const newQuantityShowProduct =
+        //   productSelect[0].show_quantity - product.quantity;
 
-        const [updateProduct] = await connection.query(
-          "UPDATE product SET show_quantity = ? WHERE id_product = ?",
-          [newQuantityShowProduct, product.id]
-        );
+        // const [updateProduct] = await connection.query(
+        //   "UPDATE product SET show_quantity = ? WHERE id_product = ?",
+        //   [newQuantityShowProduct, product.id]
+        // );
 
-        if (updateProduct.affectedRows === 0) {
-          const error = new Error(
-            `Error al actualizar la nueva cantidad a mostrar del producto "${product.name}"`
-          );
-          error.statusCode = 500;
+        // if (updateProduct.affectedRows === 0) {
+        //   const error = new Error(
+        //     `Error al actualizar la nueva cantidad a mostrar del producto "${product.name}"`
+        //   );
+        //   error.statusCode = 500;
 
-          throw error;
-        }
+        //   throw error;
+        // }
       }
 
       // Confirmamos los cambios

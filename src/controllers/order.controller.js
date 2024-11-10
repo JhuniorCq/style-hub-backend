@@ -28,10 +28,7 @@ export class OrderController {
 
       const order = await OrderModel.getOrder({ id });
 
-      res.json({
-        success: true,
-        data: order,
-      });
+      res.json(order);
     } catch (err) {
       console.error("Error en getOrder en order.controller.js", err.message);
       next(err);

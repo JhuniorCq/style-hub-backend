@@ -2,14 +2,11 @@ import { pool } from "../config/db.js";
 import { ORDER_STATES } from "../util/constants.js";
 
 export class PaymentModel {
-  static async updateOrder({ idOrder, namePaypal, emailPaypal }) {
+  static async updateOrder({ idOrder, namePaypal, emailPaypal, productList }) {
     let connection;
     try {
       // Obtenemos una conexión del pool de conexions
       connection = await pool.getConnection();
-
-      // Iniciamos la transacción
-      await connection.beginTransaction();
 
       // Actualizamos el pedido de "Pendiente" a "Pagado"
       const [updateStatusOrder] = await connection.query(
@@ -27,7 +24,37 @@ export class PaymentModel {
         throw error;
       }
 
-      // Obtenemos el id_customer
+      // Iniciamos la transacción
+      await connection.beginTransaction();
+
+      for (const product of productList) {
+        const [productSelect] = await connection.query(
+          "SELECT show_quantity FROM product WHERE id_product = ?",
+          [product.id]
+        );
+
+        // No es necesario verificar si es positivo, ya que esto ya se hizo cuando se creo el pedido
+        const newQuantityShowProduct =
+          productSelect[0].show_quantity - product.quantity;
+
+        const [updateProduct] = await connection.query(
+          "UPDATE product SET show_quantity = ? WHERE id_product = ?",
+          [newQuantityShowProduct, product.id]
+        );
+
+        if (updateProduct.affectedRows === 0) {
+          const error = new Error(
+            `Error al actualizar la nueva cantidad a mostrar del producto "${product.name}"`
+          );
+          error.statusCode = 500;
+          throw error;
+        }
+      }
+
+      // Confirmamos la transacción
+      await connection.commit();
+
+      // Obtenemos el id_customer -> Esta parte lo hacemos fuera de la Transacción porque no es tan relevante como para que se revierta todo si hay un error
       const [selectIdCustomer] = await connection.query(
         "SELECT id_customer FROM order_customer WHERE id_order = ?",
         [idOrder]
@@ -56,9 +83,6 @@ export class PaymentModel {
         error.statusCode = 500;
         throw error;
       }
-
-      // Confirmamos la transacción
-      await connection.commit();
 
       return "Se actualizaron correctamos los datos del pedido";
     } catch (err) {
