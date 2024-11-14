@@ -289,8 +289,6 @@ export class OrderModel {
         }
       }
 
-      // Si hago que todos los datos enviados por el usuario se envien por el purchase_units, y que en capture-order se cree el pedido, entonces para INSERTAR los DATOS DEL PEDIDO lo mejor sería crear una variable "query" y otra "params" las cuales tendrán un valor diferente según el "TIPO DE PAGO"
-
       // Insertamos los datos del pedido
       const [insertOrder] = await connection.query(
         "INSERT INTO order_customer (id_order, order_date, status, delivery_type, id_customer) VALUES (?, ?, ?, ?, ?)",
@@ -513,6 +511,43 @@ export class OrderModel {
       if (connection) {
         connection.release();
       }
+    }
+  }
+
+  // Si está bien que la eliminación de pedidos pendientes sea si ya pasaron sus 24 horas -> Incluidos pedidos de Paypal que sean "pending"
+  static async deletePendingOrders({ hours }) {
+    try {
+      const [oldOrders] = await pool.query(
+        `
+        SELECT id_order FROM order_customer
+        WHERE status = 'pending' AND order_date + INTERVAL ? HOUR <= NOW()
+      `,
+        [hours]
+      );
+
+      if (oldOrders.length === 0) {
+        console.log(
+          "No se encontraron pedidos pendientes que hayan pasado las 48 horas"
+        );
+        return;
+      }
+
+      for (const order of oldOrders) {
+        try {
+          await this.deleteOrder({ id: order.id_order });
+          console.log(`Orden ID ${order.id_order} eliminada por antigüedad.`);
+        } catch (err) {
+          console.error(
+            "Error eliminando el pedido ID ${order.id_order}. Continuando... ",
+            err.message
+          );
+        }
+      }
+    } catch (err) {
+      console.error(
+        "Error en deletePendingOrder en order.model.js",
+        err.message
+      );
     }
   }
 }

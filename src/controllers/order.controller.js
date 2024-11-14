@@ -89,3 +89,14 @@ export class OrderController {
     }
   }
 }
+
+export const deletePendingOrders = async (hours) => {
+  try {
+    await OrderModel.deletePendingOrders({ hours });
+  } catch (err) {
+    console.error(
+      "Error en deletePendingOrders en order.controller.js",
+      err.message
+    );
+  }
+};
