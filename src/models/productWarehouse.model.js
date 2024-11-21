@@ -25,12 +25,9 @@ export class ProductWarehouseModel {
   }
 
   static async createProduct({ productData }) {
-    // Para este caso NO es necesario una Transacción
     try {
       const { name, price, description, idCategory, image, quantity } =
         productData;
-
-      console.log("POST: ", price, typeof price);
 
       // Verificar existencia de la categoría
       const [selectCategory] = await pool.query(
@@ -45,15 +42,11 @@ export class ProductWarehouseModel {
         throw error;
       }
 
-      console.log(selectCategory);
-
       // Insertar datos en Product
       const insertProduct = await pool.query(
         "INSERT INTO product_warehouse (name, price, description, id_category, image, quantity) VALUES (?, ?, ?, ?, ?, ?)",
         [name, price, description, idCategory, image, quantity]
       );
-
-      console.log(insertProduct);
 
       // Lanzar error si no se hizo alguna inserción
       if (insertProduct[0].affectedRows === 0) {
@@ -62,7 +55,6 @@ export class ProductWarehouseModel {
         throw error;
       }
 
-      // return `El producto "${name}" ha sido insertado con éxito en el almacén.`;
       return {
         message: "Producto insertado en el almacén",
         dataInsert: insertProduct,

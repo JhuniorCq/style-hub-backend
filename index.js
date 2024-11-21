@@ -21,6 +21,7 @@ app.use(
     origin: URL_SHOP,
   })
 );
+
 app.use(morgan("dev"));
 app.use(express.json());
 
@@ -47,8 +48,7 @@ app.use((req, res) => {
   res.status(404).json({ message: "Error 404 Not Found" });
 });
 
-// Eliminar pedidos pendientes (Yape, Depósito o Paypal) (para revisar pedidos cada hora el patrón CRON sería -> 0 * * * *)
-cron.schedule("*/2 * * * *", async () => {
+cron.schedule("0 * * * *", async () => {
   try {
     await deletePendingOrders(24);
     console.log(

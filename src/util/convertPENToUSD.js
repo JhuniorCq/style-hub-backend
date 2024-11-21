@@ -2,7 +2,6 @@ import axios from "axios";
 import { EXCHANGERATE_API } from "../config/config.js";
 import { DELIVERY_OPTIONS, SHIPPING_COST } from "./constants.js";
 
-// Lo mejor es solo LLAMAR a la API una vez, para así tener un VALOR del DÓLAR FIJO para una EJECUCIÓN, ya que el Dólar está en constante cambio
 const getExchangerate = async () => {
   try {
     const response = await axios.get(EXCHANGERATE_API);

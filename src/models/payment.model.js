@@ -14,7 +14,6 @@ export class PaymentModel {
         [ORDER_STATES.PAID, idOrder]
       );
 
-      // Creamos un error personalizado
       if (updateStatusOrder.affectedRows === 0) {
         const error = new Error(
           "El pedido ha sido pagado exitosamente, pero no se ha podido actualizar su estado."
@@ -33,7 +32,6 @@ export class PaymentModel {
           [product.id]
         );
 
-        // No es necesario verificar si es positivo, ya que esto ya se hizo cuando se creo el pedido
         const newQuantityShowProduct =
           productSelect[0].show_quantity - product.quantity;
 
@@ -54,7 +52,6 @@ export class PaymentModel {
       // Confirmamos la transacción
       await connection.commit();
 
-      // Obtenemos el id_customer -> Esta parte lo hacemos fuera de la Transacción porque no es tan relevante como para que se revierta todo si hay un error
       const [selectIdCustomer] = await connection.query(
         "SELECT id_customer FROM order_customer WHERE id_order = ?",
         [idOrder]
@@ -69,7 +66,6 @@ export class PaymentModel {
         throw error;
       }
 
-      // Actualizamos name_paypal y email_paypal en la tabla customer
       const [updateCustomer] = await connection.query(
         "UPDATE customer SET name_paypal = ?, email_paypal = ? WHERE id_customer = ?",
         [namePaypal, emailPaypal, selectIdCustomer[0].id_customer]

@@ -1,4 +1,3 @@
-import { date } from "zod";
 import { pool } from "../config/db.js";
 import {
   DELIVERY_OPTIONS,
@@ -352,30 +351,6 @@ export class OrderModel {
 
           throw error;
         }
-
-        // Actualizamos el show_quantity del producto de la tabla product (Este SELECT se repite en el for de arriba, tal vez se puede mejorar)
-        // ESTA A ACTUALIZACIÓN NO SE DEBE HACER, YA QUE EL ESTADO DEL PEDIDO ESTÁ EN "PENDIENTE AÚN" -> LO QUE DEBE PASAR ES QUE SE LE DEBE ENVIAR AL USUARIO UN CORREO PARA QUE PAGUE EN UN PLAZO MÁXIMO DE 48 HORAS -> SI EL PAGO FUE POR PAYPAL IGUAL NO SE DEBE DESCONTAR EN create-order, YA CUANDO SE ESTÉ EN capture-order AHI SE DEBE DESCONTAR
-        // const [productSelect] = await connection.query(
-        //   "SELECT show_quantity FROM product WHERE id_product = ?",
-        //   [product.id]
-        // );
-
-        // const newQuantityShowProduct =
-        //   productSelect[0].show_quantity - product.quantity;
-
-        // const [updateProduct] = await connection.query(
-        //   "UPDATE product SET show_quantity = ? WHERE id_product = ?",
-        //   [newQuantityShowProduct, product.id]
-        // );
-
-        // if (updateProduct.affectedRows === 0) {
-        //   const error = new Error(
-        //     `Error al actualizar la nueva cantidad a mostrar del producto "${product.name}"`
-        //   );
-        //   error.statusCode = 500;
-
-        //   throw error;
-        // }
       }
 
       // Confirmamos los cambios
@@ -514,7 +489,6 @@ export class OrderModel {
     }
   }
 
-  // Si está bien que la eliminación de pedidos pendientes sea si ya pasaron sus 24 horas -> Incluidos pedidos de Paypal que sean "pending"
   static async deletePendingOrders({ hours }) {
     try {
       const [oldOrders] = await pool.query(
@@ -526,16 +500,12 @@ export class OrderModel {
       );
 
       if (oldOrders.length === 0) {
-        console.log(
-          "No se encontraron pedidos pendientes que hayan pasado las 48 horas"
-        );
         return;
       }
 
       for (const order of oldOrders) {
         try {
           await this.deleteOrder({ id: order.id_order });
-          console.log(`Orden ID ${order.id_order} eliminada por antigüedad.`);
         } catch (err) {
           console.error(
             "Error eliminando el pedido ID ${order.id_order}. Continuando... ",

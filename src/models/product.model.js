@@ -68,9 +68,6 @@ export class ProductModel {
         throw error;
       }
 
-      console.log(selectProductWarehouse);
-
-      // Obtenemos el quantity del producto de la Tabla product_warehouse -> Para este entonces ya sabemos que idProductWarehouse SÍ existe
       const quantityProductWarehouse = selectProductWarehouse[0].quantity;
 
       // Obtenemos el nuevo quantity del producto de la Tabla product_warehouse
@@ -86,7 +83,6 @@ export class ProductModel {
         throw error;
       }
 
-      // Iniciar la Transacción -> Es más eficiente para la Transacción que empiece acá, ya que las Operación Anterior (el SELECT) NO modifica la BD, solo consulta datos
       await connection.beginTransaction();
 
       // Insertamos los datos en la tabla product
@@ -120,13 +116,8 @@ export class ProductModel {
       // Confirmar los cambios
       await connection.commit();
 
-      console.log(
-        `En el almacén hay ${quantityProductWarehouse}, y pondré ${showQuantity} unidades en la tienda, quedando en el almacén: ${newQuantityProductWarehouse}`
-      );
-
       return `El producto ${idProductWarehouse} del almacén se insertó exitosamente en la Tabla product.`;
     } catch (err) {
-      // Revertir cambios en caso de error (El if es por si NO se obtiene una conexión y salta un ERROR, así cuando se entre el catch por el error, NO haremos un callback a un connection que no existe)
       if (connection) {
         await connection.rollback();
       }
@@ -134,7 +125,6 @@ export class ProductModel {
       console.error("Error en createProduct en product.model.js", err.message);
       throw err;
     } finally {
-      // Si al inicio se obtuvo correctamente la conexión -> La liberamos luego de finalizar la Transacción
       if (connection) {
         connection.release();
       }
