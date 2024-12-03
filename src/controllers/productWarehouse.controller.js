@@ -26,11 +26,14 @@ export class ProductWarehouseController {
   static async createProduct(req, res, next) {
     try {
       const productData = req.body;
+      // VALIDAR LOS DATOS ENVIADOS POR EL USUARIO
 
+      // ENVIAR LOS DATOS VALIDADOS AL MODELO
       const result = await ProductWarehouseModel.createProduct({
         productData,
       });
 
+      // res.json({ message: result });
       res.json(result);
     } catch (err) {
       console.error(

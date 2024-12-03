@@ -14,6 +14,7 @@ export class OrderController {
         paymentOption,
       });
 
+      console.log(orders.length);
       res.json(orders);
     } catch (err) {
       console.error("Error en getOrders en order.controller.js", err.message);
@@ -38,11 +39,14 @@ export class OrderController {
     try {
       const { productList, checkoutData } = req.body;
 
+      // VALIDAR LOS DATOS ENVIADOS POR EL USUARIO
       const productListValidated = validateProductList(productList);
       const checkoutDataValidated = validateCheckoutData(
         checkoutData,
         checkoutData.deliveryOption
       );
+
+      console.log(productListValidated.error, checkoutDataValidated.error);
 
       if (!productListValidated.success || !checkoutDataValidated.success) {
         const error = new Error("Error en la Validación de los datos.");
@@ -50,10 +54,18 @@ export class OrderController {
         throw error;
       }
 
+      // ENVIAR LOS DATOS AL MODELO
       const result = await OrderModel.createOrder({
         productList: productListValidated.data,
         checkoutData: checkoutDataValidated.data,
       });
+
+      console.log(
+        "Respuesta luego de almacenar los datos del pedido: ",
+        result
+      );
+
+      // Enviar un correo al usuario
 
       res.json(result);
     } catch (err) {
@@ -65,6 +77,8 @@ export class OrderController {
   static async deleteOrder(req, res, next) {
     try {
       const { id } = req.params;
+
+      console.log("Eliminaré el pedido con el ID: ", id);
 
       const result = await OrderModel.deleteOrder({ id });
 

@@ -44,6 +44,9 @@ export class ProductController {
     try {
       const productData = req.body;
 
+      // VALIDAR LOS DATOS ENVIADOS POR EL USUARIO
+
+      // ENVIAR LOS DATOS AL MODELO
       const result = await ProductModel.createProduct({ productData });
 
       res.json({ message: result });

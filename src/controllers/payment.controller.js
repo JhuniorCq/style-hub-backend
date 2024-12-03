@@ -18,6 +18,8 @@ export class PaymentController {
   static async createOrder(req, res, next) {
     const { productList, checkoutData } = req.body;
 
+    console.log("Esto es lo que el usuario envió: ", req.body);
+
     try {
       // VALIDAMOS LOS DATOS ENVIADOS POR EL USUARIO
       const productListValidated = validateProductList(productList);
@@ -32,25 +34,44 @@ export class PaymentController {
         throw error;
       }
 
-      const { data: orderData } = await OrderModel.createOrder({
-        productList: productListValidated.data,
-        checkoutData: checkoutDataValidated.data,
-      });
+      console.log(
+        "Estos son los datos validados: ",
+        productListValidated.data,
+        checkoutDataValidated.data
+      );
+
+      // GUARDAMOS LOS DATOS EN LA BD -> Si ocurre un error en la creación del pedido, createOrder devolverá success: false
+      const { /*success: orderSuccess,*/ data: orderData } =
+        await OrderModel.createOrder({
+          productList: productListValidated.data,
+          checkoutData: checkoutDataValidated.data,
+        });
+
+      // Esto NO porque OrderModel.createOrder siempre devuelve un success: true
+      // if (!orderSuccess) {
+      //   const error = new Error("Hubo un error en la creación del pedido.");
+      //   error.statusCode = 500;
+      //   throw error;
+      // }
 
       const { itemListUSD, amountTotalUSD } = await getCostUSD(
         productList,
         checkoutData.deliveryOption
       );
 
+      console.log("Item List USD: ", itemListUSD);
+      console.log("Amount Total USD: ", amountTotalUSD);
+
       // CREAMOS EL PEDIDO EN PAYPAL
       const order = {
         intent: "CAPTURE",
         purchase_units: [
           {
-            reference_id: orderData.idOrder,
+            reference_id: orderData.idOrder, // Pasamos el ID del pedido para recuperarlo en /capture-order
             amount: {
               currency_code: "USD",
               value: amountTotalUSD,
+              // La propiedad "breakdown" es necesario solo si usamos la propiedad "items"
               breakdown: {
                 item_total: {
                   currency_code: "USD",
@@ -58,6 +79,7 @@ export class PaymentController {
                 },
               },
             },
+            // La propiedad "items" NO es OBLIGATORIIA según la Documentación de Paypal
             items: itemListUSD,
           },
         ],
@@ -69,6 +91,7 @@ export class PaymentController {
               user_action: "PAY_NOW",
               return_url: `${HOST}/payment/capture-order`,
               cancel_url: `${HOST}/payment/cancel-order?idOrder=${orderData.idOrder}`,
+              // cancel_url: "http://localhost:5173/checkout",
             },
           },
         },
@@ -107,8 +130,10 @@ export class PaymentController {
 
   static async captureOrder(req, res, next) {
     try {
+      // Este "token" lo genera Paypal automáticamente luego de que aceptes y realices el Pago
       const { token } = req.query;
 
+      // En el "data" de este "response" está TODA la información del PEDIDO, del COMPRADOR, de los PRODUCTOS, etc. -> De acá podemos sacar algunos DATOS para almacenar en la BD (aparte de los que se obtiene del formulario)
       const response = await axios.post(
         `${PAYPAL_API}/v2/checkout/orders/${token}/capture`,
         {},
@@ -120,12 +145,14 @@ export class PaymentController {
         }
       );
 
+      // Obtenemos algunos datos del pedido
       const idOrder = response.data.purchase_units[0].reference_id;
       const namePaypal = `${response.data.payer.name.given_name} ${response.data.payer.name.surname}`;
       const emailPaypal = response.data.payer.email_address;
 
+      // Obtenemos la lista de productos del pedido para disminuir la cantidad X de cada producto a la cantidad de ese producto en la BD
       const resultOrder = await OrderModel.getOrder({ id: idOrder });
-
+      console.log(resultOrder);
       const {
         data: { productList },
       } = resultOrder;
@@ -144,6 +171,7 @@ export class PaymentController {
         err.message
       );
 
+      // Cuando ocurre un error en captureOrder puedo hacer que me redireccione al front a una vista especial y ya NO uso el next(err), porque esto hará que el navegador del usuario se dirija a la URL de este servidor mostrándo como respuesta un JSON del error
       next(err);
     }
   }
@@ -152,8 +180,11 @@ export class PaymentController {
     try {
       const { idOrder } = req.query;
 
-      await OrderModel.deleteOrder({ id: idOrder });
+      console.log(req.originalUrl, idOrder);
 
+      const resultDelete = await OrderModel.deleteOrder({ id: idOrder });
+
+      // res.json({ success: resultDelete });
       res.redirect("http://localhost:5173/checkout");
     } catch (err) {
       console.error(
