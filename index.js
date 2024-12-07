@@ -11,7 +11,6 @@ import { router as routerProductWarehouse } from "./src/routes/productWarehouse.
 import { URL_SHOP } from "./src/util/constants.js";
 import path from "node:path";
 import { deletePendingOrders } from "./src/controllers/order.controller.js";
-import dayjs from "dayjs";
 import helmet from "helmet";
 
 const app = express();
@@ -51,14 +50,9 @@ app.use((req, res) => {
   res.status(404).json({ message: "Error 404 Not Found" });
 });
 
-// Eliminar pedidos pendientes (Yape, Depósito o Paypal) (para revisar pedidos cada hora el patrón CRON sería -> 0 * * * *) (*/2 * * * *)
 cron.schedule("0 * * * *", async () => {
   try {
     await deletePendingOrders(24);
-    console.log(
-      "Se terminó de ejecutar deletePendingOrders a las:",
-      dayjs().format("YYYY-MM-DD HH:mm:ss")
-    );
   } catch (err) {
     console.error(
       "Error en la tarea programada deletePendingOrders:",
