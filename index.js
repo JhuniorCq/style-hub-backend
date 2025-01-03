@@ -19,7 +19,7 @@ const app = express();
 app.disable("x-powered-by");
 app.use(
   cors({
-    origin: URL_SHOP,
+    origin: [URL_SHOP, "https://proyecto-tienda-stylehub.vercel.app/"],
   })
 );
 
