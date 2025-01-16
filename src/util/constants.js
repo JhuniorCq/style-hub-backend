@@ -17,6 +17,6 @@ export const ORDER_STATES = {
   CANCELED: "Canceled",
 };
 
-export const URL_SHOP = "http://localhost:5173";
+export const URL_SHOP = "https://proyecto-tienda-stylehub.vercel.app";
 
 export const DEFAULT_SELECT_VALUE = "notValid";
