@@ -9,7 +9,6 @@ import { router as routerPayment } from "./src/routes/payment.routes.js";
 import { router as routerProduct } from "./src/routes/product.routes.js";
 import { router as routerProductWarehouse } from "./src/routes/productWarehouse.routes.js";
 import { URL_SHOP } from "./src/util/constants.js";
-// import path from "node:path";
 import { deletePendingOrders } from "./src/controllers/order.controller.js";
 import dayjs from "dayjs";
 import helmet from "helmet";
@@ -27,12 +26,6 @@ app.use(helmet());
 
 app.use(morgan("dev"));
 app.use(express.json());
-
-// app.use(express.static(path.resolve("src", "public")));
-
-// app.get("/", (req, res, next) => {
-//   res.json({ message: `Hola, estás en ${req.url}` });
-// });
 
 // Rutas de Order
 app.use("/order", routerOrder);
